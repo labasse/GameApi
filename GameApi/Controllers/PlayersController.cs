@@ -70,11 +70,11 @@ namespace GameApi.Controllers
         /// <param name="privateId">Private id of the player to delete</param>
         /// <returns>No content</returns>
         /// <response code="204">Player successfully deleted</response>
-        /// <response code="400">The given id is not the creator's private id</response>
+        /// <response code="401">The given id is not the creator's private id</response>
         /// <response code="404">Game not found</response>
         [HttpDelete("{publicId:guid}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public ActionResult DeletePlayer(Guid publicId, Guid privateId)
         {
@@ -88,7 +88,7 @@ namespace GameApi.Controllers
                 return ex.ParamName switch
                 {
                     "publicId" => NotFound("No player with this public id"),
-                    "privateId" => BadRequest("The private id is not the player's private one"),
+                    "privateId" => Unauthorized("The private id is not the player's private one"),
                     _ => BadRequest($"Unexpected error : {ex.Message}")
                 };
             }

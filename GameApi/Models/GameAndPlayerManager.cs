@@ -1,4 +1,5 @@
 ﻿using GameApi.Utils;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace GameApi.Models
 {
@@ -17,46 +18,61 @@ namespace GameApi.Models
             _guidgen = guidgen;
         }
 
-        public IEnumerable<Player> AllPlayers
+        private Guid[] EmptyGameIds =>
+            _games.Values
+            .Where(g => g.IsEmpty)
+            .Select(g => g.Id)
+            .ToArray();
+
+        private void UpdatePlayers()
         {
-            get
+            lock (this)
             {
-                lock (this)
-                {
-                    var dead = _players
+                var dead = _players
                         .Where(p => p.Value.AliveExceeds(PlayerTimeout, _clock))
                         .Select(p => p.Value)
                         .ToArray();
 
-                    foreach (var p in dead)
-                    {
-                        foreach (var g in _games.Values)
+                foreach (var p in dead)
+                {
+                    foreach (var g in _games.Values)
+                        if(!g.IsEmpty)
                         {
                             g.Remove(p, g.Creator.PrivateId);
                         }
-                        _players.Remove(p.PublicId);
-                    }
-                    return _players.Values;
+                    _players.Remove(p.PublicId);
                 }
+                foreach(var id in EmptyGameIds)
+                {
+                    _games.Remove(id);
+                }
+            }
+        }
+
+        public IEnumerable<Player> AllPlayers
+        {
+            get
+            {
+                UpdatePlayers();
+                return _players.Values;
             }
         }
         public IEnumerable<Game> AllGames
         {
             get
             {
-                lock(this)
-                {
-                    var empty = _games
-                        .Where(g => g.Value.IsEmpty)
-                        .Select(g => g.Key)
-                        .ToArray();
-
-                    foreach (var k in empty)
-                        _games.Remove(k);
-                    return _games.Values;
-                }
+                UpdatePlayers();
+                return _games.Values;
             }
         }
+        public Game? GetGameByPlayer(Player player)
+            => _games.Values
+                .SelectMany(
+                    g => g.Players.Select<Player,(Game g,Player p)?>(p => (g, p))
+                 )
+                .Where(duo => duo.HasValue && duo.Value.p.Equals(player))
+                .FirstOrDefault()?.g;
+
         public Game NewGame(string title, Guid creatorPrivateId)
         {
             lock (this)
@@ -69,6 +85,10 @@ namespace GameApi.Models
                         "No player with the creator id",
                         nameof(creatorPrivateId)
                     );
+                }
+                if (GetGameByPlayer(creator) is not null)
+                {
+                    throw new InvalidOperationException("A player in a game cannot create a game");
                 }
                 var game = new Game(title, creator, _guidgen);
 
@@ -103,6 +123,7 @@ namespace GameApi.Models
 
         public Game? GameById(Guid id)
         {
+            UpdatePlayers();
             if(!_games.ContainsKey(id))
             {
                 return null;

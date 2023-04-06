@@ -1,6 +1,5 @@
 ﻿using GameApi.DTOs;
 using GameApi.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics.CodeAnalysis;
 
@@ -40,12 +39,14 @@ namespace GameApi.Controllers
         /// <param name="player">Player who joins the game : Public and private Id must be correctly set.</param>
         /// <returns></returns>
         /// <response code="201">Player successfully joined the game</response>
-        /// <response code="400">The player already joined the game or the given private Id does not match the player's one</response>
+        /// <response code="401">The given private Id does not match the player's one</response>
         /// <response code="404">No game or player with this public id</response>
+        /// <response code="409">The player already joined the game</response>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         public ActionResult<Player> JoinGame(Guid gameId, [FromBody] Player player)
         {
             var p = _manager.PlayerByPublicId(player.PublicId);
@@ -56,7 +57,11 @@ namespace GameApi.Controllers
             }
             if(p.PrivateId != player.PrivateId)
             {
-                return BadRequest("Given private Id does not match the player's one");
+                return Unauthorized("Given private Id does not match the player's one");
+            }
+            if(_manager.GetGameByPlayer(p) is not null)
+            {
+                return Conflict("Already in a game");
             }
             if(!FindGame(gameId, out var game))
             {
@@ -64,8 +69,8 @@ namespace GameApi.Controllers
             }
             try
             {
-                game.Add(player);
-                return Ok(p);
+                game.Add(p);
+                return Created($"/games/{game.Id}/players/{player.PublicId}", p);
             }
             catch(ArgumentException)
             {
@@ -76,18 +81,25 @@ namespace GameApi.Controllers
         /// Gets a player out of a game.
         /// </summary>
         /// <param name="gameId">Game to leave</param>
-        /// <param name="player">Public Id of the player to get out, the private key can be the leaving player's one or the creator's one</param>
+        /// <param name="publicId">Public Id of the player to get out</param>
+        /// <param name="privateId">, the private key can be the leaving player's one or the creator's one</param>
         /// <returns>No content</returns>
         /// <response code="204">player successfully removed from the game</response>
-        /// <response code="403">Given private key does not allow to get the player out of the game</response>
+        /// <response code="400">Private id parameter expected</response>
+        /// <response code="401">Given private key does not allow to get the player out of the game</response>
         /// <response code="404">No player or game with this public id</response>
-        [HttpDelete]
+        [HttpDelete("{publicId:guid}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult LeaveGameOrKick(Guid gameId, [FromBody] Player player)
+        public ActionResult LeaveGameOrKick(Guid gameId, Guid publicId, Guid privateId)
         {
-            var p = _manager.PlayerByPublicId(player.PublicId);
+            if(privateId == Guid.Empty)
+            {
+                return BadRequest("Private Id parameter expected");
+            }
+            var p = _manager.PlayerByPublicId(publicId);
 
             if (p == null)
             {
@@ -99,12 +111,12 @@ namespace GameApi.Controllers
             }
             try
             {
-                game.Remove(p, player.PrivateId);
+                game.Remove(p, privateId);
                 return NoContent();
             }
             catch (ArgumentException)
             {
-                return Forbid("Given private Id does not allow to kick the player");
+                return Unauthorized("Given private Id does not allow to kick the player");
             }
         }
     }
