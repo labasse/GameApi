@@ -1,11 +1,13 @@
-﻿namespace GameApi.Models
+﻿using GameApi.Utils;
+
+namespace GameApi.Models
 {
     public class Game
     {
         private readonly List<Player> _players;
-        public Game(string title, Player creator)
+        public Game(string title, Player creator, IGuidGenerator guidgen)
         {
-            Id = Guid.NewGuid();
+            Id = guidgen.NewGuid();
             Title = title;
             _players = new List<Player>{ creator };
         }
@@ -31,7 +33,10 @@
             {
                 if(privateId != Creator.PrivateId && privateId != player.PrivateId)
                 {
-                    throw new ArgumentException(nameof(privateId), "Player kick denied (only creator or player himself)");
+                    throw new ArgumentException(
+                        "Player kick denied (only creator or player himself)", 
+                        nameof(privateId)
+                    );
                 }
                 var index = _players.IndexOf(player);
                 var found = index >= 0;

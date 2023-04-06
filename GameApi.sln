@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33502.453
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameApi", "GameApi\GameApi.csproj", "{682F4F9B-D306-45B6-9996-C8ABD66D08E3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GameApi", "GameApi\GameApi.csproj", "{682F4F9B-D306-45B6-9996-C8ABD66D08E3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestGameApi", "TestGameApi\TestGameApi.csproj", "{23B2D955-4418-4600-92B5-2BC5B345275A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{682F4F9B-D306-45B6-9996-C8ABD66D08E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{682F4F9B-D306-45B6-9996-C8ABD66D08E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{682F4F9B-D306-45B6-9996-C8ABD66D08E3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{23B2D955-4418-4600-92B5-2BC5B345275A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{23B2D955-4418-4600-92B5-2BC5B345275A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{23B2D955-4418-4600-92B5-2BC5B345275A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{23B2D955-4418-4600-92B5-2BC5B345275A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

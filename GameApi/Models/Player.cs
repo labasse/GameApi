@@ -1,22 +1,27 @@
-﻿namespace GameApi.Models
+﻿using GameApi.Utils;
+
+namespace GameApi.Models
 {
     public record Player(Guid PrivateId, Guid PublicId, string Pseudo)
     {
-        private DateTime liveSignAt = DateTime.UtcNow;
+        private DateTime liveSignAt;
 
         #region For deserialization only
         public Player() : this(Guid.NewGuid(), Guid.NewGuid(), "")
-        { }
+        { 
+            liveSignAt = DateTime.MinValue;
+        }
         #endregion
 
-        public Player(string pseudo) : this(Guid.NewGuid(), Guid.NewGuid(), pseudo)
+        public Player(string pseudo, IClock clock, IGuidGenerator guidgen) : this(guidgen.NewGuid(), guidgen.NewGuid(), pseudo)
         {
-            
+            liveSignAt = clock.UtcNow;
         }
-        public bool AliveExceeds(TimeSpan duration) => DateTime.UtcNow - liveSignAt > duration;
-        public void MarkAsAlive()
+        public bool AliveExceeds(TimeSpan duration, IClock clock) 
+            => clock.UtcNow - liveSignAt > duration;
+        public void MarkAsAlive(IClock clock)
         {
-            liveSignAt = DateTime.UtcNow;
+            liveSignAt = clock.UtcNow;
         }
     }
 }

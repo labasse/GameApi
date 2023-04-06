@@ -67,7 +67,7 @@ namespace GameApi.Controllers
         /// <param name="creatorPrivateId">Private Id of the game creator</param>
         /// <returns>No content</returns>
         /// <response code="204">Game successfully deleted</response>
-        /// <response code="403">The given id is not the creator's private id</response>
+        /// <response code="400">The given id is not the creator's private id</response>
         /// <response code="404">Game not found</response>
         [HttpDelete("{gameId:guid}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -84,7 +84,7 @@ namespace GameApi.Controllers
                 return ex.ParamName switch
                 {
                     "gameId" => NotFound("No game with this id"),
-                    "privateId" => Forbid("The given id is not the creator's private one"),
+                    "privateId" => BadRequest("The given id is not the creator's private one"),
                     _ => BadRequest($"Unexpected error : {ex.Message}")
                 };
             }

@@ -1,5 +1,6 @@
 
 using GameApi.Models;
+using GameApi.Utils;
 using System.Reflection;
 
 namespace GameApi
@@ -11,6 +12,8 @@ namespace GameApi
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
+            builder.Services.AddSingleton(_ => SystemClock.Instance);
+            builder.Services.AddSingleton(_ => SystemGuidGenerator.Instance);
             builder.Services.AddSingleton<GameAndPlayerManager>();
 
             builder.Services.AddControllers();
@@ -27,14 +30,11 @@ namespace GameApi
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI(c =>
-                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Game API v1")
-                );
-            }
-
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Game API v1")
+            );
+            
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
